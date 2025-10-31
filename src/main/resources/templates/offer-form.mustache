@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make an Offer - {{item.name}}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/styles.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark brand-bg shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/items">
+                <i class="bi bi-shop"></i> Collectibles Store
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/items">
+                            <i class="bi bi-grid-3x3-gap"></i> Items
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/offers/list">
+                            <i class="bi bi-tag"></i> Offers
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <div class="brand-bg text-white py-4">
+        <div class="container">
+            <h1 class="display-6 fw-bold mb-0">
+                <i class="bi bi-tags"></i> Make an Offer
+            </h1>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Item Info Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header brand-bg text-white">
+                        <h5 class="mb-0">
+                            <i class="bi"></i> Item Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h4 class="mb-2">{{item.name}}</h4>
+                                <p class="text-muted mb-2">{{item.description}}</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="badge fs-5 px-3 py-2 price-badge">
+                                    Current Price<br>{{item.price}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Offer Form Card -->
+                <div class="card shadow-lg border-0">
+                    <div class="card-header brand-bg text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pencil-square"></i> Submit Your Offer
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="offer-form">
+                            <!-- Name Input -->
+                            <div class="mb-4">
+                                <label for="name-input" class="form-label fw-bold">
+                                    <i class="bi bi-person"></i> Your Name
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       id="name-input" 
+                                       name="name" 
+                                       placeholder="Enter your full name"
+                                       required>
+                                <div class="form-text">We'll use this to identify your offer</div>
+                            </div>
+
+                            <!-- Email Input -->
+                            <div class="mb-4">
+                                <label for="email-input" class="form-label fw-bold">
+                                    <i class="bi bi-envelope"></i> Your Email
+                                </label>
+                                <input type="email" 
+                                       class="form-control form-control-lg" 
+                                       id="email-input" 
+                                       name="email" 
+                                       placeholder="your.email@example.com"
+                                       required>
+                                <div class="form-text">We'll contact you at this email address</div>
+                            </div>
+
+                            <!-- Amount Input -->
+                            <div class="mb-4">
+                                <label for="amount-input" class="form-label fw-bold">
+                                    <i class="bi bi-currency-dollar"></i> Offer Amount
+                                </label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="amount-input" 
+                                           name="amount" 
+                                           placeholder="0.00"
+                                           step="0.01" 
+                                           min="0.01" 
+                                           required>
+                                </div>
+                                <div class="form-text">Enter your proposed amount for this item</div>
+                            </div>
+
+                            <input type="hidden" id="item-id-input" name="itemId" value="{{itemId}}">
+
+                            <!-- Alert Messages -->
+                            <div id="error-message" class="alert alert-danger d-none" role="alert">
+                                <i class="bi bi-exclamation-triangle"></i> <span id="error-text"></span>
+                            </div>
+                            <div id="success-message" class="alert alert-success d-none" role="alert">
+                                <i class="bi bi-check-circle"></i> <span id="success-text"></span>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="bi bi-send"></i> Submit Offer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="d-flex gap-2 mt-4">
+                    <a href="/items/{{itemId}}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> Back to Item Details
+                    </a>
+                    <a href="/items" class="btn btn-outline-secondary">
+                        <i class="bi bi-grid-3x3-gap"></i> All Items
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="brand-bg text-white mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0">
+                <i class="bi bi-c-circle"></i> 2025 Collectibles Store - Digital NAO
+            </p>
+            <small class="text-muted">Sprint 2 - Enhanced UI with Bootstrap 5</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $("#offer-form").submit(function(event) {
+                event.preventDefault();
+
+                let name = $("#name-input").val().trim();
+                let email = $("#email-input").val().trim();
+                let amount = parseFloat($("#amount-input").val());
+                let itemId = $("#item-id-input").val();
+
+                // Hide previous messages
+                $("#error-message").addClass("d-none");
+                $("#success-message").addClass("d-none");
+
+                // Client-side validation
+                if (!name || !email || !amount) {
+                    $("#error-text").text("Please fill out all fields!");
+                    $("#error-message").removeClass("d-none");
+                    return;
+                }
+
+                if (amount <= 0) {
+                    $("#error-text").text("Amount must be greater than 0!");
+                    $("#error-message").removeClass("d-none");
+                    return;
+                }
+
+                // Disable submit button
+                $("button[type='submit']").prop("disabled", true).html('<i class="bi bi-hourglass-split"></i> Submitting...');
+
+                // Prepare offer data
+                let offerData = {
+                    name: name,
+                    email: email,
+                    itemId: itemId,
+                    amount: amount
+                };
+
+                // Submit via AJAX
+                $.ajax({
+                    url: "/api/offers",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(offerData),
+                    success: function(response) {
+                        $("#success-text").text("Your offer has been submitted successfully! Redirecting...");
+                        $("#success-message").removeClass("d-none");
+                        $("#offer-form").trigger("reset");
+                        
+                        // Redirect to offers list after 2 seconds
+                        setTimeout(function() {
+                            window.location.href = "/offers/list";
+                        }, 2000);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        let errorMsg = "Error submitting offer";
+                        if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                            errorMsg = jqXHR.responseJSON.message;
+                        }
+                        $("#error-text").text(errorMsg);
+                        $("#error-message").removeClass("d-none");
+                        
+                        // Re-enable submit button
+                        $("button[type='submit']").prop("disabled", false).html('<i class="bi bi-send"></i> Submit Offer');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

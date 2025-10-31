@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{#isEdit}}Edit{{/isEdit}}{{^isEdit}}New{{/isEdit}} User - Collectibles Store</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark brand-bg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/items">
+                <i class="bi bi-shop"></i> Collectibles Store
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/items">
+                            <i class="bi bi-grid"></i> Items
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/offers">
+                            <i class="bi bi-tags"></i> Offers
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="/users"><i class="bi bi-people"></i> Users</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{#isEdit}}Edit User{{/isEdit}}{{^isEdit}}New User{{/isEdit}}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Form Card -->
+                <div class="card border-0 shadow-lg">
+                    <div class="card-header brand-bg text-white py-4">
+                        <h2 class="mb-0">
+                            <i class="bi bi-{{#isEdit}}pencil{{/isEdit}}{{^isEdit}}person-plus{{/isEdit}}"></i>
+                            {{#isEdit}}Edit User{{/isEdit}}{{^isEdit}}Create New User{{/isEdit}}
+                        </h2>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <!-- Success Alert (hidden by default) -->
+                        <div id="successAlert" class="alert alert-success border-0 shadow-sm d-none" role="alert">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <strong>Success!</strong> <span id="successMessage"></span>
+                        </div>
+
+                        <!-- Error Alert (hidden by default) -->
+                        <div id="errorAlert" class="alert alert-danger border-0 shadow-sm d-none" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <strong>Error!</strong> <span id="errorMessage"></span>
+                        </div>
+
+                        <!-- User Form -->
+                        <form id="userForm">
+                            <!-- Hidden ID field for edit mode -->
+                            {{#isEdit}}
+                            <input type="hidden" id="userId" value="{{user.id}}">
+                            {{/isEdit}}
+
+                            <!-- Name Field -->
+                            <div class="mb-4">
+                                <label for="name" class="form-label fw-bold">
+                                    <i class="bi bi-person"></i> Full Name *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    class="form-control form-control-lg" 
+                                    id="name" 
+                                    name="name"
+                                    value="{{user.name}}"
+                                    placeholder="Enter full name" 
+                                    required
+                                    minlength="3">
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Minimum 3 characters
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please enter a valid name (at least 3 characters).
+                                </div>
+                            </div>
+
+                            <!-- Email Field -->
+                            <div class="mb-4">
+                                <label for="email" class="form-label fw-bold">
+                                    <i class="bi bi-envelope"></i> Email Address *
+                                </label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-at"></i>
+                                    </span>
+                                    <input 
+                                        type="email" 
+                                        class="form-control" 
+                                        id="email" 
+                                        name="email"
+                                        value="{{user.email}}"
+                                        placeholder="user@example.com" 
+                                        required>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Valid email format required
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please enter a valid email address.
+                                </div>
+                            </div>
+
+                            <!-- Role Field -->
+                            <div class="mb-4">
+                                <label for="role" class="form-label fw-bold">
+                                    <i class="bi bi-person-badge"></i> User Role *
+                                </label>
+                                <select class="form-select form-select-lg" id="role" name="role" required>
+                                    <option value="">Select a role...</option>
+                                    <option value="admin" {{#user.isAdmin}}selected{{/user.isAdmin}}>
+                                        <i class="bi bi-shield-check"></i> Admin - Full system access
+                                    </option>
+                                    <option value="seller" {{#user.isSeller}}selected{{/user.isSeller}}>
+                                        <i class="bi bi-briefcase"></i> Seller - Can list items
+                                    </option>
+                                    <option value="buyer" {{#user.isBuyer}}selected{{/user.isBuyer}}>
+                                        <i class="bi bi-cart"></i> Buyer - Can make offers
+                                    </option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Choose the appropriate role for this user
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please select a role.
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="bi bi-{{#isEdit}}check-circle{{/isEdit}}{{^isEdit}}plus-circle{{/isEdit}}"></i>
+                                    <span id="btnText">{{#isEdit}}Update User{{/isEdit}}{{^isEdit}}Create User{{/isEdit}}</span>
+                                    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>
+                                </button>
+                                <a href="/users" class="btn btn-outline-secondary btn-lg">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Info Alert -->
+                <div class="alert alert-info border-0 shadow-sm mt-4">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <strong>Note:</strong> All fields marked with * are required. 
+                    {{#isEdit}}
+                    You are editing the user "{{user.name}}".
+                    {{/isEdit}}
+                    {{^isEdit}}
+                    Fill in the form to create a new user account.
+                    {{/isEdit}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="brand-bg text-white text-center py-4 mt-auto">
+        <div class="container">
+            <p class="mb-0">
+                <i class="bi bi-shop"></i> Collectibles Store &copy; 2025
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        const isEdit = {{#isEdit}}true{{/isEdit}}{{^isEdit}}false{{/isEdit}};
+        
+        $(document).ready(function() {
+            // Real-time validation
+            $('#name').on('input', function() {
+                validateName($(this));
+            });
+
+            $('#email').on('input', function() {
+                validateEmail($(this));
+            });
+
+            $('#role').on('change', function() {
+                validateRole($(this));
+            });
+
+            // Form submission
+            $('#userForm').on('submit', async function(e) {
+                e.preventDefault();
+
+                // Validate all fields
+                const nameValid = validateName($('#name'));
+                const emailValid = validateEmail($('#email'));
+                const roleValid = validateRole($('#role'));
+
+                if (!nameValid || !emailValid || !roleValid) {
+                    $('#userForm').addClass('shake');
+                    setTimeout(() => $('#userForm').removeClass('shake'), 500);
+                    return;
+                }
+
+                // Prepare data
+                const userData = {
+                    name: $('#name').val().trim(),
+                    email: $('#email').val().trim(),
+                    role: $('#role').val()
+                };
+
+                if (isEdit) {
+                    userData.id = $('#userId').val();
+                }
+
+                // Show loading state
+                const submitBtn = $('#submitBtn');
+                const btnText = $('#btnText');
+                const btnSpinner = $('#btnSpinner');
+                
+                submitBtn.prop('disabled', true);
+                btnText.addClass('d-none');
+                btnSpinner.removeClass('d-none');
+
+                try {
+                    const method = isEdit ? 'PUT' : 'POST';
+                    const url = isEdit ? `/api/users/${userData.id}` : '/api/users';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Show success message
+                        $('#successMessage').text(result.message);
+                        $('#successAlert').removeClass('d-none');
+                        $('#errorAlert').addClass('d-none');
+
+                        // Confetti effect
+                        createConfetti();
+
+                        // Redirect after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = '/users';
+                        }, 2000);
+                    } else {
+                        // Show error message
+                        $('#errorMessage').text(result.message);
+                        $('#errorAlert').removeClass('d-none');
+                        $('#successAlert').addClass('d-none');
+                        
+                        // Scroll to error
+                        $('html, body').animate({
+                            scrollTop: $('#errorAlert').offset().top - 100
+                        }, 500);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    $('#errorMessage').text('Network error. Please try again.');
+                    $('#errorAlert').removeClass('d-none');
+                    $('#successAlert').addClass('d-none');
+                } finally {
+                    // Reset button state
+                    submitBtn.prop('disabled', false);
+                    btnText.removeClass('d-none');
+                    btnSpinner.addClass('d-none');
+                }
+            });
+        });
+
+        function validateName(input) {
+            const value = input.val().trim();
+            if (value.length >= 3) {
+                input.removeClass('is-invalid').addClass('is-valid');
+                return true;
+            } else {
+                input.removeClass('is-valid').addClass('is-invalid');
+                return false;
+            }
+        }
+
+        function validateEmail(input) {
+            const value = input.val().trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailRegex.test(value)) {
+                input.removeClass('is-invalid').addClass('is-valid');
+                return true;
+            } else {
+                input.removeClass('is-valid').addClass('is-invalid');
+                return false;
+            }
+        }
+
+        function validateRole(input) {
+            const value = input.val();
+            if (value !== '') {
+                input.removeClass('is-invalid').addClass('is-valid');
+                return true;
+            } else {
+                input.removeClass('is-valid').addClass('is-invalid');
+                return false;
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = $('<div class="confetti"></div>');
+                confetti.css({
+                    left: Math.random() * 100 + '%',
+                    backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                    animationDelay: Math.random() * 3 + 's'
+                });
+                $('body').append(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+    </script>
+</body>
+</html>

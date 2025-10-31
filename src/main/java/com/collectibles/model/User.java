@@ -1,11 +1,11 @@
 package com.collectibles.model;
 
 /**
- * Represents a user in the collectibles store system.
- * This model encapsulates user information including authentication
- * and authorization details for the online store platform.
- * 
- * @author Melany Rivera
+ * Represents a user in the Collectibles Store platform.
+ * This model captures identity, contact information, role-based
+ * authorization, and creation timestamp to support account workflows.
+ *
+ * Authors: Ricardo Ruiz and Melany Rivera
  * @since 27/10/2025
  * @version 1.0
  */

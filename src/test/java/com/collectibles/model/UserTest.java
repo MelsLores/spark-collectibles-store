@@ -6,10 +6,11 @@ import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the User model class.
- * Tests all constructors, getters, setters, and utility methods.
- * 
- * @author Melany Rivera
+ * Executive unit tests for the User model.
+ * These tests validate user data handling, role behaviors, and
+ * automatic timestamp generation to ensure consistent user records.
+ *
+ * Authors: Ricardo Ruiz and Melany Rivera
  * @since 27/10/2025
  * @version 1.0
  */

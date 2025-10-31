@@ -1,11 +1,12 @@
 package com.collectibles.model;
 
 /**
- * Represents a collectible item in the online store.
- * This model encapsulates all the information about a collectible product
- * including its unique identifier, name, detailed description, and price.
- * 
- * @author Melany Rivera
+ * Represents a collectible product in the online store.
+ * This model encapsulates the item's identifier, display name,
+ * detailed description, and price information. Designed for
+ * predictable serialization and template rendering.
+ *
+ * Authors: Ricardo Ruiz and Melany Rivera
  * @since 27/10/2025
  * @version 1.0
  */

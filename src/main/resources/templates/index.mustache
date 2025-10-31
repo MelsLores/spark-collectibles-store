@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collectibles Store — Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark brand-bg shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shop"></i> Collectibles Store
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/items">Items</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/offers/list">Offers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero / Carousel -->
+    <div class="container my-5">
+        <div id="homeCarousel" class="carousel slide shadow-lg rounded" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                {{#featured}}
+                <div class="carousel-item {{#first}}active{{/first}}">
+                    <div class="row g-0 align-items-center">
+                        <div class="col-md-6">
+                            <img src="/products/{{image}}" class="d-block w-100 rounded-start" alt="{{name}}">
+                        </div>
+                        <div class="col-md-6 p-4">
+                            <h2 class="display-6 fw-bold">{{name}}</h2>
+                            <p class="lead text-muted">{{description}}</p>
+                            <p class="mb-4"><strong class="price-badge">{{price}}</strong></p>
+                            <a href="/items/{{id}}" class="btn btn-primary btn-lg me-2">View Item</a>
+                            <a href="/offers/new?itemId={{id}}" class="btn btn-danger btn-lg">Make an Offer</a>
+                        </div>
+                    </div>
+                </div>
+                {{/featured}}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Featured grid -->
+    <div class="container my-5">
+        <h3 class="mb-4">Featured Items</h3>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {{#featured}}
+            <div class="col">
+                <div class="card h-100 hover-card">
+                    <img src="/products/{{image}}" class="card-img-top object-cover" alt="{{name}}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{name}}</h5>
+                        <p class="text-muted small">{{artist}}</p>
+                        <p class="mb-2"><strong class="price-badge">{{price}}</strong></p>
+                        <a href="/items/{{id}}" class="btn btn-primary btn-sm">View</a>
+                    </div>
+                </div>
+            </div>
+            {{/featured}}
+        </div>
+    </div>
+
+    <footer class="brand-bg text-white py-4 mt-5">
+        <div class="container text-center">
+            <small>© 2025 Collectibles Store</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

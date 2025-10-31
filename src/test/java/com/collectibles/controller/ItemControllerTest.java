@@ -14,10 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for the ItemController class.
- * Tests all route handlers and business logic methods.
- * 
- * @author Melany Rivera
+ * Executive unit tests for the ItemController class.
+ * These tests validate core API responses and controller behavior
+ * to ensure reliable retrieval of item data and correct error handling.
+ *
+ * Authors: Ricardo Ruiz and Melany Rivera
  * @since 27/10/2025
  * @version 1.0
  */
