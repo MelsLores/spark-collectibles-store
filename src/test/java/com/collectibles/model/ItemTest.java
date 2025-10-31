@@ -5,10 +5,11 @@ import org.junit.jupiter.api.DisplayName;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the Item model class.
- * Tests all constructors, getters, setters, and utility methods.
- * 
- * @author Melany Rivera
+ * Executive unit tests for the Item model.
+ * These focused tests verify constructors, accessors, and basic
+ * data integrity to support reliable business logic.
+ *
+ * Authors: Ricardo Ruiz and Melany Rivera
  * @since 27/10/2025
  * @version 1.0
  */
