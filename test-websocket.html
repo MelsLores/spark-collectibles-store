@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Price Update Simulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4><i class="bi bi-broadcast"></i> WebSocket Price Update Simulator</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Instrucciones:</strong>
+                    <ol>
+                        <li>Abre <code>http://localhost:4567/items</code> en otra pestaña</li>
+                        <li>Selecciona un item y actualiza su precio aquí</li>
+                        <li>Observa cómo el precio se actualiza en tiempo real en la otra pestaña</li>
+                    </ol>
+                </div>
+
+                <form id="priceUpdateForm" class="mb-4">
+                    <div class="mb-3">
+                        <label class="form-label">Item ID:</label>
+                        <select class="form-select" id="itemId">
+                            <option value="item1">item1 - Gorra Peso Pluma</option>
+                            <option value="item2">item2 - Casco Rosalía</option>
+                            <option value="item3">item3 - Chamarra Bad Bunny</option>
+                            <option value="item4">item4 - Guitarra Fernando Delgadillo</option>
+                            <option value="item5">item5 - Jersey Snoop Dogg</option>
+                            <option value="item6">item6 - Prenda Cardi B</option>
+                            <option value="item7">item7 - Guitarra Coldplay</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nuevo Precio ($USD):</label>
+                        <input type="number" class="form-control" id="newPrice" step="0.01" min="0" value="999.99">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Actualizar Precio
+                    </button>
+                </form>
+
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <strong>WebSocket Status:</strong> 
+                        <span id="wsStatus" class="badge bg-warning">Disconnected</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="log" class="font-monospace small" style="max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const logDiv = document.getElementById('log');
+        const wsStatusBadge = document.getElementById('wsStatus');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-info';
+            logDiv.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Connect to WebSocket
+        let ws;
+        function connectWS() {
+            try {
+                ws = new WebSocket('ws://localhost:4567/ws/prices');
+                
+                ws.onopen = function() {
+                    log('✓ WebSocket connected!', 'success');
+                    wsStatusBadge.className = 'badge bg-success';
+                    wsStatusBadge.textContent = 'Connected';
+                };
+                
+                ws.onmessage = function(event) {
+                    log('📨 Message received: ' + event.data, 'success');
+                };
+                
+                ws.onerror = function(error) {
+                    log('❌ WebSocket error: ' + error, 'error');
+                    wsStatusBadge.className = 'badge bg-danger';
+                    wsStatusBadge.textContent = 'Error';
+                };
+                
+                ws.onclose = function() {
+                    log('🔌 WebSocket closed', 'error');
+                    wsStatusBadge.className = 'badge bg-warning';
+                    wsStatusBadge.textContent = 'Disconnected';
+                };
+            } catch (e) {
+                log('❌ Failed to connect: ' + e.message, 'error');
+            }
+        }
+
+        connectWS();
+
+        // Handle form submission
+        document.getElementById('priceUpdateForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const itemId = document.getElementById('itemId').value;
+            const newPrice = parseFloat(document.getElementById('newPrice').value);
+            
+            log(`🔄 Sending PUT request to update ${itemId} to $${newPrice}...`);
+            
+            try {
+                const response = await fetch(`http://localhost:4567/items/${itemId}/price`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ price: newPrice })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✓ Price updated successfully! Response: ${JSON.stringify(data)}`, 'success');
+                    log('💡 Ahora revisa la otra pestaña para ver la actualización en tiempo real!', 'success');
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ Error: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Request failed: ${error.message}`, 'error');
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</body>
+</html>

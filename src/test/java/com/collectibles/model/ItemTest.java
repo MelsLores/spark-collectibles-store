@@ -5,17 +5,34 @@ import org.junit.jupiter.api.DisplayName;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Executive unit tests for the Item model.
- * These focused tests verify constructors, accessors, and basic
- * data integrity to support reliable business logic.
- *
- * Authors: Ricardo Ruiz and Melany Rivera
- * @since 27/10/2025
- * @version 1.0
+ * Unit tests for the Item model class.
+ * Tests all constructors, getters, setters, and utility methods.
+ * 
+ * <p><b>Test Coverage:</b></p>
+ * <ul>
+ * <li>Default constructor</li>
+ * <li>Parameterized constructor</li>
+ * <li>Getter and setter methods</li>
+ * <li>toString() method</li>
+ * <li>Edge cases (null values, empty strings)</li>
+ * </ul>
+ * 
+ * @author Melany Rivera
+ * @author Ricardo Ruiz
+ * @version 3.0
+ * @since 02/11/2025
  */
 @DisplayName("Item Model Tests")
 class ItemTest {
 
+    /**
+     * Tests the default constructor.
+     * Verifies all fields are initialized to null.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should create Item with default constructor")
     void testDefaultConstructor() {
@@ -28,6 +45,14 @@ class ItemTest {
         assertNull(item.getPrice(), "Price should be null");
     }
 
+    /**
+     * Tests the parameterized constructor.
+     * Verifies all fields are correctly initialized with provided values.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should create Item with parameterized constructor")
     void testParameterizedConstructor() {
@@ -45,6 +70,14 @@ class ItemTest {
         assertEquals(price, item.getPrice(), "Price should match");
     }
 
+    /**
+     * Tests the ID getter and setter methods.
+     * Verifies proper assignment and retrieval.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get ID correctly")
     void testSetAndGetId() {
@@ -56,6 +89,13 @@ class ItemTest {
         assertEquals(id, item.getId(), "ID should be set and retrieved correctly");
     }
 
+    /**
+     * Tests the name getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get name correctly")
     void testSetAndGetName() {
@@ -67,6 +107,13 @@ class ItemTest {
         assertEquals(name, item.getName(), "Name should be set and retrieved correctly");
     }
 
+    /**
+     * Tests the description getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get description correctly")
     void testSetAndGetDescription() {
@@ -78,6 +125,13 @@ class ItemTest {
         assertEquals(description, item.getDescription(), "Description should be set and retrieved correctly");
     }
 
+    /**
+     * Tests the price getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get price correctly")
     void testSetAndGetPrice() {
@@ -89,6 +143,14 @@ class ItemTest {
         assertEquals(price, item.getPrice(), "Price should be set and retrieved correctly");
     }
 
+    /**
+     * Tests the toString() method.
+     * Verifies that all fields are included in string representation.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should return correct toString representation")
     void testToString() {
@@ -107,6 +169,14 @@ class ItemTest {
         assertTrue(toString.contains(price), "ToString should contain price");
     }
 
+    /**
+     * Tests handling of null values in constructor.
+     * Verifies that null values are properly stored.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should handle null values")
     void testNullValues() {
@@ -118,6 +188,14 @@ class ItemTest {
         assertNull(item.getPrice(), "Price should be null");
     }
 
+    /**
+     * Tests handling of empty strings in constructor.
+     * Verifies that empty strings are properly stored.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should handle empty strings")
     void testEmptyStrings() {

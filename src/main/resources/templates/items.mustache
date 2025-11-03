@@ -42,14 +42,100 @@
     <div class="brand-bg text-white py-5">
         <div class="container">
             <h1 class="display-4 fw-bold">
-                <i class="bi"></i> Collectibles for Sale
+                <i class="bi bi-gem"></i> Collectibles for Sale
             </h1>
             <p class="lead">Discover unique and rare collectible items</p>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="badge bg-success" id="ws-status">
+                    <i class="bi bi-wifi"></i> Connecting...
+                </span>
+                <small class="text-white-50">Real-time price updates enabled</small>
+            </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="container my-5">
+        <!-- Sprint 3: Filter Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-funnel"></i> Filter Items
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <!-- Search Input -->
+                    <div class="col-md-4">
+                        <label for="searchInput" class="form-label">
+                            <i class="bi bi-search"></i> Search
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="searchInput" 
+                            name="search"
+                            placeholder="Search by name or description..."
+                            value="{{filterSearch}}">
+                    </div>
+
+                    <!-- Min Price -->
+                    <div class="col-md-3">
+                        <label for="minPriceInput" class="form-label">
+                            <i class="bi bi-currency-dollar"></i> Min Price
+                        </label>
+                        <input 
+                            type="number" 
+                            class="form-control" 
+                            id="minPriceInput" 
+                            name="minPrice"
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                            value="{{filterMinPrice}}">
+                    </div>
+
+                    <!-- Max Price -->
+                    <div class="col-md-3">
+                        <label for="maxPriceInput" class="form-label">
+                            <i class="bi bi-currency-dollar"></i> Max Price
+                        </label>
+                        <input 
+                            type="number" 
+                            class="form-control" 
+                            id="maxPriceInput" 
+                            name="maxPrice"
+                            placeholder="10000.00"
+                            step="0.01"
+                            min="0"
+                            value="{{filterMaxPrice}}">
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="bi bi-check-circle"></i> Apply
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearFilters">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Filter Status -->
+                {{#filtersApplied}}
+                <div class="alert alert-info mt-3 mb-0 d-flex align-items-center justify-content-between">
+                    <span>
+                        <i class="bi bi-info-circle"></i> 
+                        Showing {{itemCount}} filtered item(s)
+                    </span>
+                    <a href="/items" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-arrow-clockwise"></i> Show All
+                    </a>
+                </div>
+                {{/filtersApplied}}
+            </div>
+        </div>
         <div class="row">
             <div class="col-12">
                 <!-- Items Grid -->
@@ -57,7 +143,7 @@
                     {{#items}}
                     <div class="col">
                         <div class="card h-100 shadow-sm hover-card product-card">
-                            <img src="/products/{{image}}" class="card-img-top object-cover" alt="{{name}}">
+                            <img src="{{imageUrl}}" class="card-img-top object-cover" alt="{{name}}">
                             <div class="card-body d-flex flex-column">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
@@ -72,7 +158,7 @@
                                     {{description}}
                                 </p>
                                 <div class="d-flex gap-2 mt-3">
-                                    <a href="/items/{{id}}" class="btn btn-primary btn-sm flex-fill">
+                                    <a href="/items/{{id}}/view" class="btn btn-primary btn-sm flex-fill">
                                         <i class="bi bi-eye"></i> View
                                     </a>
                                     <a href="/offers/new?itemId={{id}}" class="btn btn-danger btn-sm flex-fill">
@@ -113,5 +199,155 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="/script.js"></script>
+
+    <!-- Sprint 3: Filter and WebSocket JavaScript -->
+    <script>
+        // ==================== FILTER FUNCTIONALITY ====================
+        
+        // Clear filters button
+        document.getElementById('clearFilters')?.addEventListener('click', function() {
+            window.location.href = '/items';
+        });
+
+        // Filter form submission
+        document.getElementById('filterForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const search = document.getElementById('searchInput').value.trim();
+            const minPrice = document.getElementById('minPriceInput').value.trim();
+            const maxPrice = document.getElementById('maxPriceInput').value.trim();
+            
+            // Build query string
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (minPrice) params.append('minPrice', minPrice);
+            if (maxPrice) params.append('maxPrice', maxPrice);
+            
+            // Redirect with filters
+            if (params.toString()) {
+                window.location.href = '/items?' + params.toString();
+            } else {
+                window.location.href = '/items';
+            }
+        });
+
+        // ==================== WEBSOCKET REAL-TIME PRICE UPDATES ====================
+        
+        let ws = null;
+        const wsStatusBadge = document.getElementById('ws-status');
+        
+        /**
+         * Initialize WebSocket connection for real-time price updates
+         */
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket('ws://localhost:4567/ws/prices');
+                
+                ws.onopen = function() {
+                    console.log('WebSocket connected');
+                    updateWSStatus('connected');
+                };
+                
+                ws.onmessage = function(event) {
+                    console.log('WebSocket message received:', event.data);
+                    
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'PRICE_UPDATE') {
+                            updateItemPrice(data.itemId, data.newPrice);
+                        } else if (data.type === 'CONNECTED') {
+                            console.log('WebSocket welcome:', data.message);
+                        } else if (data.type === 'ERROR') {
+                            console.error('WebSocket error:', data.message);
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse WebSocket message:', e);
+                    }
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateWSStatus('error');
+                };
+                
+                ws.onclose = function() {
+                    console.log('WebSocket closed, reconnecting in 5s...');
+                    updateWSStatus('disconnected');
+                    
+                    // Auto-reconnect after 5 seconds
+                    setTimeout(connectWebSocket, 5000);
+                };
+                
+            } catch (e) {
+                console.error('Failed to create WebSocket:', e);
+                updateWSStatus('error');
+            }
+        }
+        
+        /**
+         * Update WebSocket connection status badge
+         */
+        function updateWSStatus(status) {
+            if (!wsStatusBadge) return;
+            
+            switch(status) {
+                case 'connected':
+                    wsStatusBadge.className = 'badge bg-success';
+                    wsStatusBadge.innerHTML = '<i class="bi bi-wifi"></i> Connected';
+                    break;
+                case 'disconnected':
+                    wsStatusBadge.className = 'badge bg-warning';
+                    wsStatusBadge.innerHTML = '<i class="bi bi-wifi-off"></i> Reconnecting...';
+                    break;
+                case 'error':
+                    wsStatusBadge.className = 'badge bg-danger';
+                    wsStatusBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error';
+                    break;
+            }
+        }
+        
+        /**
+         * Update item price in the UI when WebSocket notification received
+         */
+        function updateItemPrice(itemId, newPrice) {
+            console.log(`Updating price for ${itemId}: ${newPrice}`);
+            
+            // Find all price badges for this item
+            const cards = document.querySelectorAll('.product-card');
+            
+            cards.forEach(card => {
+                const viewLink = card.querySelector('a[href^="/items/"]');
+                if (viewLink && viewLink.href.includes(itemId)) {
+                    const priceBadge = card.querySelector('.price-badge');
+                    if (priceBadge) {
+                        // Animate price change
+                        priceBadge.style.transition = 'all 0.3s ease';
+                        priceBadge.style.transform = 'scale(1.2)';
+                        priceBadge.style.backgroundColor = '#28a745'; // Green flash
+                        priceBadge.textContent = newPrice;
+                        
+                        // Reset animation after 300ms
+                        setTimeout(() => {
+                            priceBadge.style.transform = 'scale(1)';
+                            priceBadge.style.backgroundColor = '';
+                        }, 300);
+                    }
+                }
+            });
+        }
+        
+        // Initialize WebSocket on page load
+        if (window.location.protocol !== 'file:') {
+            connectWebSocket();
+        }
+        
+        // Clean up WebSocket on page unload
+        window.addEventListener('beforeunload', function() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -6,24 +6,51 @@ import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Executive unit tests for the User model.
- * These tests validate user data handling, role behaviors, and
- * automatic timestamp generation to ensure consistent user records.
- *
- * Authors: Ricardo Ruiz and Melany Rivera
- * @since 27/10/2025
- * @version 1.0
+ * Unit tests for the User model class.
+ * Tests all constructors, getters, setters, and utility methods.
+ * 
+ * <p><b>Test Coverage:</b></p>
+ * <ul>
+ * <li>Default constructor</li>
+ * <li>Parameterized constructor with automatic timestamp</li>
+ * <li>Getter and setter methods for all fields</li>
+ * <li>toString() method representation</li>
+ * <li>Automatic creation timestamp generation</li>
+ * <li>Different user roles (admin, seller, buyer)</li>
+ * <li>Edge cases (null values, empty strings)</li>
+ * </ul>
+ * 
+ * @author Melany Rivera
+ * @author Ricardo Ruiz
+ * @version 3.0
+ * @since 02/11/2025
  */
 @DisplayName("User Model Tests")
 class UserTest {
 
     private User user;
 
+    /**
+     * Sets up test fixtures before each test execution.
+     * Initializes a new User instance with default constructor.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @BeforeEach
     void setUp() {
         user = new User();
     }
 
+    /**
+     * Tests the default constructor.
+     * Verifies all fields are initialized to null.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should create User with default constructor")
     void testDefaultConstructor() {
@@ -35,6 +62,14 @@ class UserTest {
         assertNull(user.getCreatedAt(), "CreatedAt should be null");
     }
 
+    /**
+     * Tests the parameterized constructor.
+     * Verifies all fields are correctly initialized and timestamp is auto-generated.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should create User with parameterized constructor")
     void testParameterizedConstructor() {
@@ -53,6 +88,13 @@ class UserTest {
         assertNotNull(user.getCreatedAt(), "CreatedAt should be set automatically");
     }
 
+    /**
+     * Tests ID getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get ID correctly")
     void testSetAndGetId() {
@@ -62,6 +104,13 @@ class UserTest {
         assertEquals(id, user.getId(), "ID should be set and retrieved correctly");
     }
 
+    /**
+     * Tests name getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get name correctly")
     void testSetAndGetName() {
@@ -71,6 +120,13 @@ class UserTest {
         assertEquals(name, user.getName(), "Name should be set and retrieved correctly");
     }
 
+    /**
+     * Tests email getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get email correctly")
     void testSetAndGetEmail() {
@@ -80,6 +136,13 @@ class UserTest {
         assertEquals(email, user.getEmail(), "Email should be set and retrieved correctly");
     }
 
+    /**
+     * Tests role getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get role correctly")
     void testSetAndGetRole() {
@@ -89,6 +152,13 @@ class UserTest {
         assertEquals(role, user.getRole(), "Role should be set and retrieved correctly");
     }
 
+    /**
+     * Tests createdAt getter and setter methods.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should set and get createdAt correctly")
     void testSetAndGetCreatedAt() {
@@ -98,6 +168,14 @@ class UserTest {
         assertEquals(timestamp, user.getCreatedAt(), "CreatedAt should be set and retrieved correctly");
     }
 
+    /**
+     * Tests the toString() method.
+     * Verifies all fields are included in string representation.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should return correct toString representation")
     void testToString() {
@@ -117,6 +195,14 @@ class UserTest {
         assertTrue(toString.contains("createdAt"), "ToString should contain createdAt field");
     }
 
+    /**
+     * Tests automatic creation timestamp generation.
+     * Verifies that createdAt is automatically set when user is created.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should automatically set creation timestamp")
     void testCreationTimestamp() {
@@ -126,6 +212,14 @@ class UserTest {
         assertFalse(newUser.getCreatedAt().isEmpty(), "Creation timestamp should not be empty");
     }
 
+    /**
+     * Tests handling of different user roles.
+     * Verifies that role field accepts various role types.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should handle different user roles")
     void testDifferentRoles() {
@@ -139,6 +233,14 @@ class UserTest {
         assertEquals("buyer", user.getRole());
     }
 
+    /**
+     * Tests handling of null values in constructor.
+     * Verifies that null values are properly stored except for auto-generated createdAt.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should handle null values")
     void testNullValues() {
@@ -151,6 +253,14 @@ class UserTest {
         assertNotNull(nullUser.getCreatedAt(), "CreatedAt should still be set");
     }
 
+    /**
+     * Tests handling of empty strings in constructor.
+     * Verifies that empty strings are properly stored.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
+     */
     @Test
     @DisplayName("Should handle empty strings")
     void testEmptyStrings() {
