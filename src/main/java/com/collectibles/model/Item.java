@@ -1,12 +1,11 @@
 package com.collectibles.model;
 
 /**
- * Represents a collectible product in the online store.
- * This model encapsulates the item's identifier, display name,
- * detailed description, and price information. Designed for
- * predictable serialization and template rendering.
- *
- * Authors: Ricardo Ruiz and Melany Rivera
+ * Represents a collectible item in the online store.
+ * This model encapsulates all the information about a collectible product
+ * including its unique identifier, name, detailed description, and price.
+ * 
+ * @author Melany Rivera
  * @since 27/10/2025
  * @version 1.0
  */
@@ -15,6 +14,7 @@ public class Item {
     private String name;
     private String description;
     private String price;
+    private String imageUrl;
 
     /**
      * Default constructor for Item.
@@ -40,6 +40,7 @@ public class Item {
         this.name = name;
         this.description = description;
         this.price = price;
+        this.imageUrl = "/products/" + id + ".jpg"; // Default image path
     }
 
     /**
@@ -123,6 +124,29 @@ public class Item {
     }
 
     /**
+     * Gets the image URL of the item.
+     * 
+     * @return The item's image URL
+     * @since 02/11/2025
+     */
+    public String getImageUrl() {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return "/products/" + id + ".jpg";
+        }
+        return imageUrl;
+    }
+
+    /**
+     * Sets the image URL of the item.
+     * 
+     * @param imageUrl The image URL to set
+     * @since 02/11/2025
+     */
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    /**
      * Returns a string representation of the Item.
      * 
      * @return A formatted string containing all item properties
@@ -135,6 +159,7 @@ public class Item {
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", price='" + price + '\'' +
+                ", imageUrl='" + imageUrl + '\'' +
                 '}';
     }
 }

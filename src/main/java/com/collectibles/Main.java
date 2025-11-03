@@ -2,166 +2,115 @@ package com.collectibles;
 
 import static spark.Spark.*;
 import com.google.gson.Gson;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import com.collectibles.controller.UserController;
 import com.collectibles.controller.ItemController;
 import com.collectibles.controller.OfferController;
-import com.collectibles.database.DatabaseConfig;
-import com.collectibles.exception.*;
-import spark.template.mustache.MustacheTemplateEngine;
+import com.collectibles.model.Item;
+import com.collectibles.websocket.PriceUpdateWebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.ModelAndView;
+import spark.template.mustache.MustacheTemplateEngine;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Clase principal de la aplicación Spark Collectibles Store
- * Configuración y arranque del servidor
+ * Main application class for Spark Collectibles Store.
+ * Handles server configuration, route setup, and WebSocket initialization.
  * 
- * Sprint 2: Enhanced with centralized exception handling and Mustache templates
- * Updated: PostgreSQL database integration
+ * <p><b>Sprint 3 Features:</b></p>
+ * <ul>
+ * <li>Item filtering by price range and search term</li>
+ * <li>Real-time price updates via WebSocket</li>
+ * </ul>
+ * 
+ * @author Melany Rivera
+ * @author Ricardo Ruiz
+ * @version 3.0
+ * @since 02/11/2025
  */
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final Gson gson = new Gson();
-    // Logical -> actual resource filename mapping. Allows using friendly names while
-    // serving the existing "item N.jpg" files without duplicating binaries.
-    private static final Map<String, String> IMAGE_ALIAS = createImageAlias();
-
-    private static Map<String, String> createImageAlias() {
-        Map<String, String> m = new HashMap<>();
-        m.put("rosalia.jpg", "item 1.jpg");
-        m.put("peso pluma.jpg", "item 2.jpg");
-        m.put("coldplay.jpg", "item 3.jpg");
-        m.put("guitarra.jpg", "item 4.jpg");
-        m.put("bad bunny.jpg", "item 5.jpg");
-        m.put("cardi b.jpg", "item 6.jpg");
-        m.put("snoop dogg.jpg", "item 7.jpg");
-        return m;
-    }
 
     public static void main(String[] args) {
-        // Inicializar base de datos PostgreSQL
-        logger.info("Inicializando conexión a base de datos PostgreSQL...");
-    DatabaseConfig.initialize();
-    // Seed items table from items.json so the DB contains exactly the items from the JSON
-    DatabaseConfig.seedItemsFromJson();
-    // Initialize sample users/offers only where missing (items insertion will be skipped if already present)
-    DatabaseConfig.initializeSampleData();
-        
-        // Shutdown hook para cerrar conexiones
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("Cerrando conexiones de base de datos...");
-            DatabaseConfig.close();
-        }));
-        
+        // Inicializar la base de datos PRIMERO
+        try {
+            logger.info("Initializing database connection pool...");
+            com.collectibles.database.DatabaseConfig.initialize();
+            logger.info("Database initialized successfully");
+        } catch (Exception e) {
+            logger.error("Failed to initialize database", e);
+            System.err.println("FATAL: Database initialization failed. Please check database configuration.");
+            System.err.println("Error: " + e.getMessage());
+            System.exit(1);
+        }
+
+        // Inicializar OfferController
+        try {
+            logger.info("Initializing OfferController...");
+            com.collectibles.controller.OfferController.initialize();
+            logger.info("OfferController initialized successfully");
+        } catch (Exception e) {
+            logger.error("Failed to initialize OfferController", e);
+            System.err.println("WARNING: OfferController initialization failed: " + e.getMessage());
+        }
+
         // Configuración del puerto
         port(4567);
-
-        // Configuración de archivos estáticos (Sprint 2)
+        
+        // Configurar archivos estáticos (CSS, JS, imágenes) desde /public
         staticFiles.location("/public");
-
-        // Serve product images from classpath /products
-        // Example: /products/rosalia.jpg  -> serves existing /products/item 1.jpg
-        get("/products/:name", (req, res) -> {
-            String name = req.params(":name");
-            // decode URL-encoded characters into actual characters for resource lookup
-            String decoded = URLDecoder.decode(name, StandardCharsets.UTF_8);
-            // map friendly logical name to actual resource filename if alias exists
-            String actual = IMAGE_ALIAS.getOrDefault(decoded, decoded);
-            String resourceName = "/products/" + actual.replace("%20", " ");
-            var is = Main.class.getResourceAsStream(resourceName);
-            if (is == null) {
-                res.status(404);
-                return "";
-            }
-            // Determine content type by extension (no WebP support per user request)
-            String lower = decoded.toLowerCase();
-            if (lower.endsWith(".png")) {
-                res.type("image/png");
-            } else {
-                // Default to jpeg for .jpg/.jpeg and unknown extensions
-                res.type("image/jpeg");
-            }
-
-            try (is) {
-                byte[] bytes = is.readAllBytes();
-                res.raw().getOutputStream().write(bytes);
-                res.raw().getOutputStream().flush();
-            }
-            return res.raw();
-        });
-
-        // Configuración de CORS
-        configureCORS();
-
-        // Configuración de manejo de excepciones (Sprint 2)
-        configureExceptionHandling();
 
         // Inicialización de controladores
         UserController userController = new UserController();
         ItemController itemController = new ItemController();
-        OfferController.initialize();  // Initialize offers from file
 
-        // Configuración de rutas
-        configureRoutes(userController, itemController);
+        // Initialize template engine
+        MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
         
-        // Ruta de prueba para error 500 (Sprint 2 Testing)
-        get("/test/error500", (req, res) -> {
-            throw new ServerException("test", "This is a test of 500 error handling");
-        });
+        // Initialize OfferController (loads offers from file)
+        OfferController.initialize();
+
+        // Configuración de WebSocket para actualizaciones de precios (Sprint 3)
+        // IMPORTANTE: Debe hacerse ANTES de ANY route mapping (including CORS)
+        configureWebSocket(itemController);
+
+        // Configuración de CORS
+        configureCORS();
+
+        // Configuración de rutas HTTP (API + Views)
+        configureRoutes(userController, itemController, templateEngine);
 
         // Mensaje de inicio
         logger.info("Servidor iniciado en http://localhost:4567");
+        logger.info("WebSocket disponible en ws://localhost:4567/ws/prices");
         System.out.println("===========================================");
         System.out.println("  Spark Collectibles Store API");
-        System.out.println("  Sprint 2: Exception Handling Enabled");
         System.out.println("  Servidor corriendo en: http://localhost:4567");
+        System.out.println("  WebSocket: ws://localhost:4567/ws/prices");
         System.out.println("===========================================");
     }
 
     /**
-     * Configuración centralizada de manejo de excepciones (Sprint 2)
+     * Configures WebSocket endpoint for real-time price updates.
      * 
-     * Casos soportados:
-     * - 404 Not Found: ItemNotFoundException, UserNotFoundException
-     * - 400 Bad Request: InvalidRequestException
-     * - 500 Internal Server Error: ServerException, Exception genérica
+     * <p><b>Sprint 3 Feature:</b> Real-time price modification</p>
+     * 
+     * @param itemController ItemController instance for price updates
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
      */
-    private static void configureExceptionHandling() {
-        // Manejo de ItemNotFoundException (404)
-        exception(ItemNotFoundException.class, (ex, req, res) -> {
-            String response = ExceptionHandler.handleItemNotFound(ex, req, res);
-            res.body(response);
-        });
-
-        // Manejo de UserNotFoundException (404)
-        exception(UserNotFoundException.class, (ex, req, res) -> {
-            String response = ExceptionHandler.handleUserNotFound(ex, req, res);
-            res.body(response);
-        });
-
-        // Manejo de InvalidRequestException (400)
-        exception(InvalidRequestException.class, (ex, req, res) -> {
-            String response = ExceptionHandler.handleInvalidRequest(ex, req, res);
-            res.body(response);
-        });
-
-        // Manejo de ServerException (500)
-        exception(ServerException.class, (ex, req, res) -> {
-            String response = ExceptionHandler.handleServerException(ex, req, res);
-            res.body(response);
-        });
-
-        // Manejo de excepciones genéricas (500)
-        exception(Exception.class, (ex, req, res) -> {
-            String response = ExceptionHandler.handleGenericException(ex, req, res);
-            res.body(response);
-        });
-
-        logger.info("Exception handling configured for: 404, 400, 500 errors");
+    private static void configureWebSocket(ItemController itemController) {
+        // Set ItemController reference in WebSocket handler
+        PriceUpdateWebSocket.setItemController(itemController);
+        
+        // Register WebSocket endpoint
+        webSocket("/ws/prices", PriceUpdateWebSocket.class);
+        
+        logger.info("WebSocket configurado en /ws/prices para actualizaciones de precios");
     }
 
     /**
@@ -186,16 +135,12 @@ public class Main {
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
             response.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-            // Only set JSON content type for API routes
-            if (request.pathInfo().startsWith("/api/") || 
-                request.pathInfo().equals("/")) {
-                response.type("application/json");
-            }
+            response.type("application/json");
         });
     }
 
     /**
-     * Configuración de todas las rutas de la API
+     * Configuración de todas las rutas de la API y vistas HTML
      * 
      * ORGANIZACIÓN DE RUTAS Y GRUPOS:
      * ================================
@@ -217,123 +162,168 @@ public class Main {
      * - Escalabilidad para agregar nuevos endpoints
      * - Separación clara de responsabilidades entre controladores
      */
-    private static void configureRoutes(UserController userController, ItemController itemController) {
-        MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
-        
+    private static void configureRoutes(UserController userController, ItemController itemController, 
+                                       MustacheTemplateEngine templateEngine) {
         // ========================================
-        // TEMPLATE ROUTES (Sprint 2 - Web UI)
+        // RUTA PRINCIPAL - Redireccionar a items
         // ========================================
-        // HTML pages using Mustache templates
+        get("/", (req, res) -> {
+            res.redirect("/items");
+            return null;
+        });
         
-        // GET /users - Render users list page (HTML)
-        get("/users", "text/html", (req, res) -> {
-            return userController.renderUsersListPage();
-        }, templateEngine);
-        
-        // GET /users/:id - Render user detail page (HTML)
-        get("/users/:id", "text/html", (req, res) -> {
-            String id = req.params(":id");
-            // If it's "form" segment, skip to form route
-            if ("form".equals(id)) {
-                return null;
+        // Manejar /items directamente (fuera del path() para evitar problemas con trailing slash)
+        get("/items", (req, res) -> {
+            res.type("text/html; charset=utf-8");
+            
+            String search = req.queryParams("search");
+            String minPriceStr = req.queryParams("minPrice");
+            String maxPriceStr = req.queryParams("maxPrice");
+            
+            Double minPrice = null;
+            Double maxPrice = null;
+            
+            if (minPriceStr != null && !minPriceStr.isEmpty()) {
+                try {
+                    minPrice = Double.parseDouble(minPriceStr);
+                } catch (NumberFormatException e) {
+                    // Ignore invalid price
+                }
             }
-            return userController.renderUserDetailPage(id);
-        }, templateEngine);
-        
-        // GET /users/form/new - Render new user form page (HTML)
-        get("/users/form/new", "text/html", (req, res) -> {
-            return userController.renderUserForm(null);
-        }, templateEngine);
-        
-        // GET /users/form/:id - Render edit user form page (HTML)
-        get("/users/form/:id", "text/html", (req, res) -> {
-            String id = req.params(":id");
-            return userController.renderUserForm(id);
-        }, templateEngine);
-        
-        // GET /items - Render items list page (HTML)
-        get("/items", "text/html", (req, res) -> {
-            return itemController.renderItemsListPage();
-        }, templateEngine);
-        
-        // GET /items/:id - Render item detail page (HTML)
-        get("/items/:id", "text/html", (req, res) -> {
-            String id = req.params(":id");
-            return itemController.renderItemDetailPage(id);
-        }, templateEngine);
-        
-        // GET /offers/new?itemId=xxx - Render offer form page (HTML)
-        get("/offers/new", "text/html", (req, res) -> {
-            return OfferController.renderOfferForm(req, res);
-        }, templateEngine);
-        
-        // GET /offers - Render offers list page (HTML)
-        get("/offers", "text/html", (req, res) -> {
-            return OfferController.renderOffersList(req, res);
-        }, templateEngine);
-        
-        // GET /offers/list - Alias for /offers (backward compatibility)
-        get("/offers/list", "text/html", (req, res) -> {
-            return OfferController.renderOffersList(req, res);
-        }, templateEngine);
-        
-        // ========================================
-        // API ROUTES (JSON endpoints)
-        // ========================================
-        
-        // API: GET /api/users - Get all users as JSON
-        get("/api/users", userController.getAllUsers());
-        
-        // API: GET /api/users/:id - Get user by ID as JSON
-        get("/api/users/:id", userController.getUserById());
-        
-        // API: POST /api/users - Create user as JSON
-        post("/api/users", userController.createUser());
-        
-        // API: PUT /api/users/:id - Update user as JSON
-        put("/api/users/:id", userController.updateUser());
-        
-        // API: DELETE /api/users/:id - Delete user as JSON
-        delete("/api/users/:id", userController.deleteUser());
-        
-        // API: GET /api/items - Get all items as JSON
-        get("/api/items", itemController.getAllItems());
-        
-        // API: GET /api/items/:id - Get item by ID as JSON
-        get("/api/items/:id", itemController.getItemById());
-        
-        // API: GET /api/items/:id/description - Get item description as JSON
-        get("/api/items/:id/description", itemController.getItemDescription());
-        
-        // API: GET /api/offers - Get all offers as JSON
-        get("/api/offers", OfferController::getAllOffers);
-        
-        // API: POST /api/offers - Submit new offer as JSON
-        post("/api/offers", OfferController::submitOffer);
-        
-        // Home page (landing) - render index.mustache with featured items
-        get("/", "text/html", (req, res) -> {
+            
+            if (maxPriceStr != null && !maxPriceStr.isEmpty()) {
+                try {
+                    maxPrice = Double.parseDouble(maxPriceStr);
+                } catch (NumberFormatException e) {
+                    // Ignore invalid price
+                }
+            }
+            
+            // Get filtered items
+            List<Item> items = itemController.filterItems(search, minPrice, maxPrice);
+            
             Map<String, Object> model = new HashMap<>();
-            // Take first 3 items as featured
-            var all = itemController.getItemsForTemplate();
-            List<Map<String, Object>> featured = new java.util.ArrayList<>();
-            for (int i = 0; i < Math.min(3, all.size()); i++) {
-                Map<String, Object> it = all.get(i);
-                // mark first as active for carousel
-                it.put("first", i == 0);
-                featured.add(it);
-            }
-            model.put("featured", featured);
-            // Return ModelAndView — template engine will render it (do not pre-render here)
-            return new spark.ModelAndView(model, "index.mustache");
-        }, templateEngine);
+            model.put("items", items);
+            model.put("hasItems", !items.isEmpty());
+            model.put("search", search != null ? search : "");
+            model.put("minPrice", minPriceStr != null ? minPriceStr : "");
+            model.put("maxPrice", maxPriceStr != null ? maxPriceStr : "");
+            
+            return templateEngine.render(new ModelAndView(model, "items.mustache"));
+        });
+
+        // ========================================
+        // GRUPO DE RUTAS: /users (API JSON)
+        // ========================================
+        // Agrupa todas las operaciones relacionadas con usuarios
+        path("/users", () -> {
+            // GET /users - Obtener todos los usuarios
+            get("", userController.getAllUsers());
+
+            // GET /users/:id - Obtener usuario por ID
+            get("/:id", userController.getUserById());
+
+            // POST /users - Crear nuevo usuario
+            post("", userController.createUser());
+
+            // PUT /users/:id - Actualizar usuario
+            put("/:id", userController.updateUser());
+
+            // DELETE /users/:id - Eliminar usuario
+            delete("/:id", userController.deleteUser());
+
+            // OPTIONS /users/:id - Verificar existencia de usuario
+            options("/:id", userController.checkUserExists());
+        });
+
+        // ========================================
+        // GRUPO DE RUTAS: /items (API JSON)
+        // ========================================
+        path("/items", () -> {
+            // HTML VIEW: GET /items/:id/view - Ver detalles de un item (HTML)
+            get("/:id/view", (req, res) -> {
+                res.type("text/html; charset=utf-8");
+                String itemId = req.params(":id");
+                
+                // Get item details from controller
+                Item item = itemController.getItemByIdObject(itemId);
+                
+                if (item == null) {
+                    res.status(404);
+                    return "<h1>Item not found</h1>";
+                }
+                
+                // Get offers for this item
+                List<Map<String, Object>> offers = OfferController.getOffersForItemModel(itemId);
+                
+                Map<String, Object> model = new HashMap<>();
+                model.put("id", item.getId());
+                model.put("name", item.getName());
+                model.put("description", item.getDescription());
+                model.put("price", item.getPrice());
+                model.put("imageUrl", item.getImageUrl());
+                model.put("offers", offers);
+                model.put("hasOffers", !offers.isEmpty());
+                
+                return templateEngine.render(new ModelAndView(model, "item-detail.mustache"));
+            });
+            
+            // API JSON: GET /items/api - Obtener lista de artículos en JSON
+            get("/api", itemController.getAllItems());
+
+            // API JSON: GET /items/filter - Obtener artículos filtrados (Sprint 3)
+            // Soporta: ?search=text&minPrice=100&maxPrice=1000
+            get("/filter", itemController.getFilteredItems());
+
+            // API JSON: GET /items/:id - Obtener artículo completo por ID (incluye descripción)
+            get("/:id", itemController.getItemById());
+
+            // API JSON: GET /items/:id/description - Ruta alternativa para obtener solo descripción
+            get("/:id/description", itemController.getItemDescription());
+        });
+
+        // ========================================
+        // GRUPO DE RUTAS: /offers
+        // ========================================
+        path("/offers", () -> {
+            // HTML VIEW: GET /offers/new - Renderizar formulario de nueva oferta
+            get("/new", (req, res) -> {
+                res.type("text/html; charset=utf-8");
+                return templateEngine.render(OfferController.renderOfferForm(req, res));
+            });
+            
+            // HTML VIEW: GET /offers/list - Renderizar lista de ofertas
+            get("/list", (req, res) -> {
+                res.type("text/html; charset=utf-8");
+                return templateEngine.render(OfferController.renderOffersList(req, res));
+            });
+            
+            // API JSON: POST /offers - Crear nueva oferta
+            post("", OfferController::submitOffer);
+            
+            // API JSON: GET /offers/all - Obtener todas las ofertas
+            get("/all", OfferController::getAllOffers);
+        });
+        
+        // API route for offers (alternative path for compatibility)
+        post("/api/offers", OfferController::submitOffer);
 
         // Manejo de rutas no encontradas
         notFound((req, res) -> {
             res.type("application/json");
             return gson.toJson(new Response(
                 false,
-                "Ruta no encontrada",
+                "Ruta no encontrada: " + req.pathInfo(),
+                null
+            ));
+        });
+
+        // Manejo de errores internos
+        internalServerError((req, res) -> {
+            res.type("application/json");
+            return gson.toJson(new Response(
+                false,
+                "Error interno del servidor",
                 null
             ));
         });

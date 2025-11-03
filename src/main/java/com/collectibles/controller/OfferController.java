@@ -18,8 +18,29 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Controller for handling offer-related requests (both API and template rendering).
- * Manages offer submissions, listing, and form display.
+ * Controller for handling offer-related operations.
+ * Manages offer submissions, listing, form display, and persistence.
+ * 
+ * <p><b>Features:</b></p>
+ * <ul>
+ * <li>Create and submit offers for items</li>
+ * <li>List all offers with filtering by item</li>
+ * <li>Render offer forms and lists using Mustache templates</li>
+ * <li>Persist offers to JSON file for data durability</li>
+ * </ul>
+ * 
+ * <p><b>Endpoints:</b></p>
+ * <ul>
+ * <li>GET /offers/new - Display offer submission form</li>
+ * <li>POST /offers - Submit new offer (API)</li>
+ * <li>GET /offers/list - Display all offers (template)</li>
+ * <li>GET /offers/all - Get all offers (JSON API)</li>
+ * </ul>
+ * 
+ * @author Melany Rivera
+ * @author Ricardo Ruiz
+ * @version 3.0
+ * @since 02/11/2025
  */
 public class OfferController {
     private static final Gson gson = new Gson();
@@ -29,7 +50,12 @@ public class OfferController {
     private static final String OFFERS_FILE = "data/ofertas.json";
 
     /**
-     * Initializes the controller by loading existing offers from ofertas.json
+     * Initializes the controller by loading existing offers from ofertas.json.
+     * Creates data directory and migrates resource file if needed for backwards compatibility.
+     * 
+     * @author Melany Rivera
+     * @author Ricardo Ruiz
+     * @since 02/11/2025
      */
     public static void initialize() {
         // If old resource file exists and data file doesn't, copy it for backwards compatibility
